@@ -158,8 +158,8 @@ ggplot(excellent_response_state_avg, aes(x = year, y = data_value_avg, group = l
 #4 
 Plot shown below
 ```{r}
+# Find data interested
 NY_response <- filter(brfss_tide, locationabbr == "NY")
-
 NY_response <- filter(NY_response, year == 2006 | year == 2010)
 
 NY_response %>%
@@ -189,7 +189,8 @@ accel_data = read_csv("./data/accel_data.csv")
 accel_data_tide <-
   accel_data %>%
   janitor::clean_names()
-  
+
+# label weekday or not  
 accel_data_tide <-
   mutate (accel_data_tide, wd_vs_wk = ifelse (day == "Saturday" | day == "Sunday", "Weekend", "Weekday"))
 ```
@@ -204,8 +205,13 @@ accel_data_tide %>%
   summarize(total_activity_day) %>%
   knitr::kable()
 ```
+#3 
 
+Plot shown below.
+
+It might be the case that in the middle of the week (near Wednsday) there is higher activity, and the activity is lowest at mid-nights. 
 ```{r}
+# change activity observations to the same variable and numerify the original minute records
 accel_data_plot <-
   accel_data_tide %>%
   pivot_longer(activity_1:activity_1440,
