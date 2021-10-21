@@ -91,7 +91,8 @@ pivot_wider(order_time, names_from = order_dow, values_from = mean_order_time)
 ```
 
 ## Problem 2
-
+#1 
+data cleaning
 
 ```{r}
 data("brfss_smart2010")
@@ -107,7 +108,8 @@ brfss_tide <- left_join(data.frame(response = response_order), # Reorder data fr
                        by = "response")
 
 ```
-
+#2
+States with more than 7 location in the survey shown below
 ```{r}
 brfss_2002 <- filter(brfss_tide, year == 2002)
 
@@ -140,7 +142,8 @@ brfss_2010_location_freq <-
 brfss_2010_location_freq
 
 ```
-
+# 3
+plot shown below
 ```{r}
 excellent_response <- filter(brfss_tide, response == "Excellent")
 
@@ -152,7 +155,8 @@ excellent_response_state_avg <-
 ggplot(excellent_response_state_avg, aes(x = year, y = data_value_avg, group = locationabbr, color = locationabbr))  +  geom_line() + geom_point() + theme_bw()
 
 ```
-
+#4 
+Plot shown below
 ```{r}
 NY_response <- filter(brfss_tide, locationabbr == "NY")
 
@@ -167,6 +171,7 @@ NY_response %>%
   viridis::scale_fill_viridis(discrete = TRUE) +
   labs(title = "Distribution of data_value in NY for Different Responses", subtitle = "for 2006 and 2010") 
 
+# (Tried also show different locations in NY)
 #ggplot(NY_response, aes(locationdesc, data_value)) +
 #  geom_point(alpha = .5) + 
 #  labs(title = "Distribution of Responses Among Locations in NY",
@@ -175,9 +180,12 @@ NY_response %>%
 
 
 ```
-
+## Problem 3
+#1
+Variable names cleaned and a varibale of weekday or weekend included.
+All variable types are double expect weekdays info. 
 ```{r}
-accel_data = read_csv("D:/Columbia/P8105 Data Science/accel_data.csv")
+accel_data = read_csv("./data/accel_data.csv")
 accel_data_tide <-
   accel_data %>%
   janitor::clean_names()
@@ -185,7 +193,8 @@ accel_data_tide <-
 accel_data_tide <-
   mutate (accel_data_tide, wd_vs_wk = ifelse (day == "Saturday" | day == "Sunday", "Weekend", "Weekday"))
 ```
-
+#2 
+total activities were calculated but there wasn't obvious trend.
 ```{r}
 accel_data_tide <-
   mutate (accel_data_tide, total_activity_day = rowSums(accel_data_tide[ , c(4:1443)], na.rm=TRUE))
