@@ -1,0 +1,217 @@
+---
+title: "P8105_HW3_sc2610"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggridges)
+library(p8105.datasets)
+library("dplyr")
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+# 1
+
+This data set has multiple levels, department -> aisle -> product_name -> information about each order. And each "char" categorical value has corresponding numerical id.
+ 
+There are 134 aisles. Fresh vegetables is the most ordered aisle.
+
+```{r}
+# load dataset
+data("instacart")
+instacart %>%
+  group_by(aisle)
+
+# since we are looking for information in aisle, group by aisles
+orders_from_aisle <- instacart %>%
+  group_by(aisle) %>%
+  count(aisle, name = "product_name") # count items
+
+# change to descend order of item counts
+orders_from_aisle_descend <- orders_from_aisle[order(-orders_from_aisle$product_name),]
+
+# show the top counts
+head(orders_from_aisle_descend)
+```
+# 2
+
+Plot shown below
+
+```{r}
+# filter aisles with over 10000 items orderd
+orders_from_aisle_descend <- 
+  orders_from_aisle_descend %>%
+  filter(product_name >= 10000)
+
+ggplot(orders_from_aisle_descend, aes(x = aisle, y = product_name)) +  ggtitle("Most popular Aisles") + 
+  geom_bar(stat = "identity") +
+      labs(y = "total items ordered") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+# 3
+
+Table shown below.
+
+```{r}
+# picked the three interested aisles
+three_aisle <-
+  filter(instacart, aisle == "baking ingredients" |aisle == "dog food care" | aisle == "packaged vegetables fruits")
+
+# calculate total ordered items
+item_freq <- three_aisle %>%
+  group_by(aisle, product_name) %>%
+  summarize(order_number = n())
+
+item_freq_top3 <- item_freq %>%  # Top 3 highest total orders by aisle
+  arrange(desc(order_number)) %>% 
+  group_by(aisle) %>%
+  slice(1:3)
+
+as.tibble(item_freq_top3)
+  
+```
+# 4
+ Table shown below
+```{r}
+# picked the two interested products
+two_product <-
+  filter(instacart, product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream")
+
+# calculate mean order time
+order_time <- two_product %>%
+  group_by(product_name, order_dow) %>%
+  summarise_at(vars(order_hour_of_day), list(mean_order_time = mean))
+
+pivot_wider(order_time, names_from = order_dow, values_from = mean_order_time)
+```
+
+## Problem 2
+
+
+```{r}
+data("brfss_smart2010")
+
+brfss_tide = janitor::clean_names(brfss_smart2010)
+
+brfss_tide <- filter(brfss_tide, topic == "Overall Health", response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor")
+
+response_order <- c("Poor", "Fair", "Good", "Very good", "Excellent")
+
+brfss_tide <- left_join(data.frame(response = response_order), # Reorder data frame
+                       brfss_tide,
+                       by = "response")
+
+```
+
+```{r}
+brfss_2002 <- filter(brfss_tide, year == 2002)
+
+brfss_2002_location_freq <- 
+  brfss_2002 %>%
+  group_by(locationabbr, locationdesc) %>%
+  summarize() %>%
+  count(locationabbr, name = "locationdesc")
+
+
+brfss_2002_location_freq <- 
+  brfss_2002_location_freq %>%
+  filter(locationdesc >= 7)
+
+brfss_2002_location_freq
+
+brfss_2010 <- filter(brfss_tide, year == 2010)
+
+brfss_2010_location_freq <- 
+  brfss_2010 %>%
+  group_by(locationabbr, locationdesc) %>%
+  summarize() %>%
+  count(locationabbr, name = "locationdesc")
+
+
+brfss_2010_location_freq <- 
+  brfss_2010_location_freq %>%
+  filter(locationdesc >= 7)
+
+brfss_2010_location_freq
+
+```
+
+```{r}
+excellent_response <- filter(brfss_tide, response == "Excellent")
+
+excellent_response_state_avg <- 
+  excellent_response %>%
+  group_by(locationabbr, year) %>%
+  summarise_at(vars(data_value), list(data_value_avg = mean))
+
+ggplot(excellent_response_state_avg, aes(x = year, y = data_value_avg, group = locationabbr, color = locationabbr))  +  geom_line() + geom_point() + theme_bw()
+
+```
+
+```{r}
+NY_response <- filter(brfss_tide, locationabbr == "NY")
+
+NY_response <- filter(NY_response, year == 2006 | year == 2010)
+
+NY_response %>%
+ select(data_value, year, response) %>%
+  ggplot(aes(x = data_value , color = response, fill = response)) +
+  geom_density(alpha = .5) + 
+  facet_grid(year ~ .) + 
+  scale_x_continuous(limits = c(0, 50)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  labs(title = "Distribution of data_value in NY for Different Responses", subtitle = "for 2006 and 2010") 
+
+#ggplot(NY_response, aes(locationdesc, data_value)) +
+#  geom_point(alpha = .5) + 
+#  labs(title = "Distribution of Responses Among Locations in NY",
+#       y = "data_value", x = "location in NY") + facet_grid(year ~ #factor(response, levels = c("Poor", "Fair", "Good", "Very good", #"Excellent"))) +
+#   theme(axis.text.x = element_text(size = 8, angle = 90, vjust = 0.5, #hjust=1))
+
+
+```
+
+```{r}
+accel_data = read_csv("D:/Columbia/P8105 Data Science/accel_data.csv")
+accel_data_tide <-
+  accel_data %>%
+  janitor::clean_names()
+  
+accel_data_tide <-
+  mutate (accel_data_tide, wd_vs_wk = ifelse (day == "Saturday" | day == "Sunday", "Weekend", "Weekday"))
+```
+
+```{r}
+accel_data_tide <-
+  mutate (accel_data_tide, total_activity_day = rowSums(accel_data_tide[ , c(4:1443)], na.rm=TRUE))
+
+accel_data_tide %>%
+  group_by(day_id) %>%
+  summarize(total_activity_day) %>%
+  knitr::kable()
+```
+
+```{r}
+accel_data_plot <-
+  accel_data_tide %>%
+  pivot_longer(activity_1:activity_1440,
+               names_to = "activity_each_min",
+               values_to = "activity_value") %>%
+  separate(activity_each_min, into = c("nan", "activity_each_min"), sep = "_") %>%
+  select(-nan)%>%
+  mutate(activity_each_min = as.numeric(activity_each_min))
+
+
+ggplot(accel_data_plot, aes(x = activity_each_min, y = activity_value, color = day))+
+  geom_smooth(se = FALSE) +
+  scale_x_continuous(breaks = c(0, 120, 240, 360, 480, 600, 720, 840, 960, 1080, 1200, 1320, 1440), labels = c("0", "2", "4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24")) +
+  ggtitle("Activity from 0AM to 12PM") + 
+  labs(
+    x = "Time",
+    y = "Activity")
+```
